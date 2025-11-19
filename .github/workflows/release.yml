@@ -1,0 +1,48 @@
+name: Build and Release
+
+# Start in Release 
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    name: Compile and Upload
+    runs-on: ubuntu-latest
+        
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Config Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25.1' 
+
+      # --- Linux ---
+      - name: Build Linux (amd64)
+        env:
+          GOOS: linux
+          GOARCH: amd64
+          CGO_ENABLED: 0 # static
+        run: go build -ldflags="-s -w" -o syncs-linux-amd64 .
+
+      # --- Windows ---
+      - name: Build Windows (amd64)
+        env:
+          GOOS: windows
+          GOARCH: amd64
+          CGO_ENABLED: 0
+        run: go build -ldflags="-s -w" -o syncs-windows-amd64.exe .
+
+      # --- Upload Files ---
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            syncs-linux-amd64
+            syncs-windows-amd64.exe

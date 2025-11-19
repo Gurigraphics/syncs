@@ -1,0 +1,31 @@
+{
+  "user_identity": {
+    "username": "server_pc",
+    "mode": "server"
+  },
+  "network": {
+    "server_port": 9999,
+    "ip": "192.168.1.50",
+    "allowed_origins": [],
+    "retry_attempts": 3,
+    "retry_delay_ms": 2000
+  },
+  "security": {
+    "connection_password": "StrongPassword123!",
+    "max_login_attempts": 3,
+    "ban_duration_minutes": 60
+  },
+  "sync_behavior": {
+    "debounce_milliseconds": 200,
+    "conflict_window_margin_ms": 50,
+    "ignore_files_without_extension": true,
+    "compression_threshold_mb": 10,
+    "progress_threshold_mb": 50
+  },
+  "logging": {
+    "enabled": true,
+    "level": "info",
+    "log_to_file": true
+  },
+  "shared_folder": "C:\\Users\\User\\Documents\\SyncFolder"
+}
