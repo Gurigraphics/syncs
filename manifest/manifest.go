@@ -106,20 +106,22 @@ func (m *Manifest) ScanAndBuild() error {
 		if err != nil {
 			return err
 		}
+
 		relPath, _ := filepath.Rel(m.SharedDir, path)
+
+		// Convert "folder\file" (Win) to "folder/file" (default)
+		relPath = filepath.ToSlash(relPath)
 
 		// Ignore directories, metadata, and ignored patterns
 		if info.IsDir() || strings.Contains(path, ".sync_meta") || watcher.IsIgnored(relPath, m.ignoreGlobs) {
 			return nil
 		}
 
-		// Update the entry (add or update hash)
 		m.UpdateEntry(relPath)
-
-		// Mark as existing
 		existsOnDisk[relPath] = true
 		return nil
 	})
+
 	if err != nil {
 		return err
 	}

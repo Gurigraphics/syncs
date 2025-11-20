@@ -95,6 +95,8 @@ func (w *Watcher) handleEvent(event fsnotify.Event) {
 		return
 	}
 
+	relPath = filepath.ToSlash(relPath)
+
 	// 1. Ignore internal files, temp files, and PARTIAL DOWNLOADS
 	if strings.Contains(event.Name, ".sync_meta") ||
 		strings.HasSuffix(event.Name, "~") ||
