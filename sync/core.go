@@ -6,13 +6,13 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
-	"time"
-
 	"syncs/config"
 	"syncs/fileops"
 	"syncs/manifest"
 	"syncs/types"
+	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -112,6 +112,14 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 		// 1. Download missing files
 		var requestList []string
 		for path, remoteHash := range remoteManifest.Paths {
+
+			// Do not request files without an extension
+			if c.cfg.SyncBehavior.IgnoreFilesWithoutExtension {
+				if !strings.Contains(filepath.Base(path), ".") {
+					continue
+				}
+			}
+
 			localHash, _, exists := c.manifest.GetEntry(path)
 			if !exists || localHash != remoteHash {
 				requestList = append(requestList, path)
@@ -145,6 +153,13 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 			Metadata types.FileMetadata `json:"metadata"`
 		}
 		remap(msg.Payload, &data)
+
+		// Ignore notifications for files without an extension
+		if c.cfg.SyncBehavior.IgnoreFilesWithoutExtension {
+			if !strings.Contains(filepath.Base(data.Path), ".") {
+				return
+			}
+		}
 
 		fullPath := filepath.Join(c.manifest.SharedDir, data.Path)
 		currentLocalHash, err := fileops.GetFileHash(fullPath)

@@ -117,6 +117,14 @@ func (m *Manifest) ScanAndBuild() error {
 			return nil
 		}
 
+		// Ignore files without extensions in scan
+		if m.cfg.SyncBehavior.IgnoreFilesWithoutExtension && !info.IsDir() {
+			fileName := filepath.Base(path)
+			if !strings.Contains(fileName, ".") {
+				return nil
+			}
+		}
+
 		m.UpdateEntry(relPath)
 		existsOnDisk[relPath] = true
 		return nil
