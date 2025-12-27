@@ -109,6 +109,14 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 			return
 		}
 
+		// Normalize remote paths to forward slashes
+		normalizedRemotePaths := make(map[string]string)
+		for path, hash := range remoteManifest.Paths {
+			normalizedPath := filepath.ToSlash(path)
+			normalizedRemotePaths[normalizedPath] = hash
+		}
+		remoteManifest.Paths = normalizedRemotePaths
+
 		// 1. Download missing files
 		var requestList []string
 		for path, remoteHash := range remoteManifest.Paths {

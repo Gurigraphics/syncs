@@ -46,18 +46,28 @@ type Config struct {
 	SharedFolder string `json:"shared_folder"` // Path to the shared folder to synchronize
 }
 
-// Load loads the configuration from the config.json file located next to the executable.
+// Load loads the configuration from the config.json file located in the current working directory or next to the executable.
 // It sets default values, decodes the JSON, and validates the configuration.
 func Load() (*Config, error) {
-	exePath, err := os.Executable()
+	// First, try to find config.json in the current working directory
+	cwd, err := os.Getwd()
 	if err != nil {
-		return nil, fmt.Errorf("could not find the executable path: %w", err)
+		return nil, fmt.Errorf("could not get current working directory: %w", err)
 	}
-	configPath := filepath.Join(filepath.Dir(exePath), "config.json")
+	configPath := filepath.Join(cwd, "config.json")
 
 	f, err := os.Open(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("configuration file '%s' not found. Create it next to the executable", configPath)
+		// If not found in cwd, try next to the executable (for built binaries)
+		exePath, exeErr := os.Executable()
+		if exeErr != nil {
+			return nil, fmt.Errorf("could not find the executable path: %w", exeErr)
+		}
+		configPath = filepath.Join(filepath.Dir(exePath), "config.json")
+		f, err = os.Open(configPath)
+		if err != nil {
+			return nil, fmt.Errorf("configuration file '%s' not found. Create it in the current directory or next to the executable", configPath)
+		}
 	}
 	defer f.Close()
 

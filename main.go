@@ -31,6 +31,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("ERROR: Invalid 'shared_folder' path: %v", err)
 	}
+	sharedDir = filepath.ToSlash(sharedDir)
 
 	config.SetupLogging(cfg, sharedDir)
 	log.Println("--- SESSION START ---")

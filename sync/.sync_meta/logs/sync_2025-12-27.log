@@ -1,0 +1,9 @@
+2025/12/27 16:19:38.503607 --- SESSION START ---
+2025/12/27 16:19:38.504217 Using shared folder: C:/Dev-ai-projects/syncs/sync
+2025/12/27 16:19:38.504217 Warning: Manifest not found or invalid. Creating a new one.
+2025/12/27 16:19:38.507148 Performing initial file scan...
+2025/12/27 16:19:38.510665 Synchronization system started. Press Ctrl+C to exit.
+2025/12/27 16:19:38.511176 WebSocket server listening on :9999
+2025/12/27 16:19:38.510665 Synchronization brain started. Waiting for events...
+2025/12/27 16:19:38.513454 File watcher started.
+2025/12/27 16:19:50.925364 Shutting down...

@@ -1,0 +1,13 @@
+{
+  "paths": {
+    "core.go": "62d4d84f8ae7f4312ef608359a87853926669bd46eeb7416a3fd0f86fb1563a7"
+  },
+  "hashes": {
+    "62d4d84f8ae7f4312ef608359a87853926669bd46eeb7416a3fd0f86fb1563a7": {
+      "last_mod_time": 1766862832487979800,
+      "last_user": "server_pc",
+      "version": 1,
+      "mode": 438
+    }
+  }
+}

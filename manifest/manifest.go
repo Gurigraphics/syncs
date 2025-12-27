@@ -68,6 +68,14 @@ func (m *Manifest) Load() error {
 	if err := json.NewDecoder(f).Decode(&m.Data); err != nil {
 		return fmt.Errorf("the manifest is corrupted: %w", err)
 	}
+	// Normalize paths to use forward slashes
+	for path, hash := range m.Data.Paths {
+		normalizedPath := filepath.ToSlash(path)
+		if normalizedPath != path {
+			delete(m.Data.Paths, path)
+			m.Data.Paths[normalizedPath] = hash
+		}
+	}
 	return nil
 }
 

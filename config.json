@@ -27,5 +27,5 @@
     "level": "info",
     "log_to_file": true
   },
-  "shared_folder": "C:\\Users\\User\\Documents\\SyncFolder"
+  "shared_folder": "./sync"
 }
