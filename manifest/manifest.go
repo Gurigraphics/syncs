@@ -18,6 +18,11 @@ import (
 	"github.com/gobwas/glob"
 )
 
+// normalizePath converts Windows backslashes to forward slashes for cross-platform compatibility
+func normalizePath(path string) string {
+	return strings.ReplaceAll(path, "\\", "/")
+}
+
 // Manifest manages the file manifest for synchronization.
 type Manifest struct {
 	Data        types.ManifestData
@@ -70,7 +75,7 @@ func (m *Manifest) Load() error {
 	}
 	// Normalize paths to use forward slashes
 	for path, hash := range m.Data.Paths {
-		normalizedPath := filepath.ToSlash(path)
+		normalizedPath := normalizePath(path)
 		if normalizedPath != path {
 			delete(m.Data.Paths, path)
 			m.Data.Paths[normalizedPath] = hash
@@ -118,7 +123,7 @@ func (m *Manifest) ScanAndBuild() error {
 		relPath, _ := filepath.Rel(m.SharedDir, path)
 
 		// Convert "folder\file" (Win) to "folder/file" (default)
-		relPath = filepath.ToSlash(relPath)
+		relPath = normalizePath(relPath)
 
 		// Ignore directories, metadata, and ignored patterns
 		if info.IsDir() || strings.Contains(path, ".sync_meta") || watcher.IsIgnored(relPath, m.ignoreGlobs) {
@@ -170,7 +175,7 @@ func (m *Manifest) ScanAndBuild() error {
 // UpdateEntry updates the manifest entry for a given relative path.
 func (m *Manifest) UpdateEntry(relPath string) (*types.FileMetadata, string, bool) {
 	// Normalize path to forward slashes (cross-platform compatibility)
-	relPath = filepath.ToSlash(relPath)
+	relPath = normalizePath(relPath)
 
 	fullPath := filepath.Join(m.SharedDir, relPath)
 	info, err := os.Stat(fullPath)
@@ -214,7 +219,7 @@ func (m *Manifest) UpdateEntry(relPath string) (*types.FileMetadata, string, boo
 
 func (m *Manifest) GetEntry(relPath string) (string, types.FileMetadata, bool) {
 	// Normalize path to forward slashes (cross-platform compatibility)
-	relPath = filepath.ToSlash(relPath)
+	relPath = normalizePath(relPath)
 
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
@@ -228,7 +233,7 @@ func (m *Manifest) GetEntry(relPath string) (string, types.FileMetadata, bool) {
 
 func (m *Manifest) HasEntry(relPath string) bool {
 	// Normalize path to forward slashes (cross-platform compatibility)
-	relPath = filepath.ToSlash(relPath)
+	relPath = normalizePath(relPath)
 
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
@@ -238,7 +243,7 @@ func (m *Manifest) HasEntry(relPath string) bool {
 
 func (m *Manifest) DeleteEntry(relPath string) *types.FileMetadata {
 	// Normalize path to forward slashes (cross-platform compatibility)
-	relPath = filepath.ToSlash(relPath)
+	relPath = normalizePath(relPath)
 
 	m.mutex.Lock()
 	defer m.mutex.Unlock()

@@ -23,6 +23,11 @@ const ChunkSize = 4 * 1024 * 1024
 
 var recentlyWritten sync.Map
 
+// normalizePath converts Windows backslashes to forward slashes for cross-platform compatibility
+func normalizePath(path string) string {
+	return strings.ReplaceAll(path, "\\", "/")
+}
+
 type Core struct {
 	cfg              *config.Config
 	manifest         *manifest.Manifest
@@ -63,7 +68,7 @@ func (c *Core) handleLocalChange(event types.FileEvent) {
 	if event.Op&fsnotify.Remove == fsnotify.Remove || event.Op&fsnotify.Rename == fsnotify.Rename {
 		if c.manifest.HasEntry(event.Path) {
 			c.manifest.DeleteEntry(event.Path)
-			pathNorm := filepath.ToSlash(event.Path)
+			pathNorm := normalizePath(event.Path)
 			log.Printf("[CORE] Local deletion of '%s'. Sending notification.", pathNorm)
 			c.outgoingMessages <- types.WSMessage{
 				Type:    "delete_notification",
@@ -79,7 +84,7 @@ func (c *Core) handleLocalChange(event types.FileEvent) {
 		return
 	}
 
-	pathNorm := filepath.ToSlash(event.Path)
+	pathNorm := normalizePath(event.Path)
 	log.Printf("[CORE] Local change to '%s'. Sending update notification.", pathNorm)
 	c.outgoingMessages <- types.WSMessage{
 		Type: "update_notification",
@@ -114,7 +119,7 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 		// Normalize remote paths to forward slashes
 		normalizedRemotePaths := make(map[string]string)
 		for path, hash := range remoteManifest.Paths {
-			normalizedPath := filepath.ToSlash(path)
+			normalizedPath := normalizePath(path)
 			normalizedRemotePaths[normalizedPath] = hash
 		}
 		remoteManifest.Paths = normalizedRemotePaths
@@ -132,7 +137,7 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 
 			localHash, _, exists := c.manifest.GetEntry(path)
 			if !exists || localHash != remoteHash {
-				requestList = append(requestList, filepath.ToSlash(path))
+				requestList = append(requestList, normalizePath(path))
 			}
 		}
 		if len(requestList) > 0 {
@@ -144,7 +149,7 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 		// Note: Depending on implementation, iterating manifest.Data.Paths directly might require locking.
 		// Assuming single-threaded Core execution or internal locking:
 		for localPath, localHash := range c.manifest.Data.Paths {
-			localPathNorm := filepath.ToSlash(localPath)
+			localPathNorm := normalizePath(localPath)
 			if _, ok := remoteManifest.Paths[localPathNorm]; !ok {
 				log.Printf("[CORE] Pushing local file missing on remote: %s", localPathNorm)
 				_, meta, _ := c.manifest.GetEntry(localPathNorm)
@@ -166,7 +171,7 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 		remap(msg.Payload, &data)
 
 		// Normalize path to forward slashes (cross-platform compatibility)
-		data.Path = filepath.ToSlash(data.Path)
+		data.Path = normalizePath(data.Path)
 
 		// Ignore notifications for files without an extension
 		if c.cfg.SyncBehavior.IgnoreFilesWithoutExtension {
@@ -209,7 +214,7 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 		remap(msg.Payload, &data)
 
 		// Normalize path to forward slashes (cross-platform compatibility)
-		data.Path = filepath.ToSlash(data.Path)
+		data.Path = normalizePath(data.Path)
 
 		if c.manifest.HasEntry(data.Path) {
 			log.Printf("[CORE] Deleting '%s'", data.Path)
@@ -228,7 +233,7 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 
 		for _, path := range requestList {
 			// Normalize path to forward slashes (cross-platform compatibility)
-			path = filepath.ToSlash(path)
+			path = normalizePath(path)
 
 			fullPath := filepath.Join(c.manifest.SharedDir, path)
 			info, err := os.Stat(fullPath)
@@ -301,7 +306,7 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 		}
 
 		// Normalize path to forward slashes (cross-platform compatibility)
-		chunk.Path = filepath.ToSlash(chunk.Path)
+		chunk.Path = normalizePath(chunk.Path)
 		log.Printf("[DEBUG] file_chunk normalizado: path='%s'", chunk.Path)
 
 		finalPath := filepath.Join(c.manifest.SharedDir, chunk.Path)

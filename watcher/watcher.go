@@ -17,6 +17,11 @@ import (
 	"github.com/gobwas/glob"
 )
 
+// normalizePath converts Windows backslashes to forward slashes for cross-platform compatibility
+func normalizePath(path string) string {
+	return strings.ReplaceAll(path, "\\", "/")
+}
+
 // Watcher encapsulates the fsnotify logic, debouncing, and filtering.
 type Watcher struct {
 	cfg            *config.Config
@@ -95,7 +100,7 @@ func (w *Watcher) handleEvent(event fsnotify.Event) {
 		return
 	}
 
-	relPath = filepath.ToSlash(relPath)
+	relPath = normalizePath(relPath)
 
 	// 1. Ignore internal files, temp files, and PARTIAL DOWNLOADS
 	if strings.Contains(event.Name, ".sync_meta") ||
@@ -188,7 +193,7 @@ func LoadIgnorePatterns(sharedDir string) ([]glob.Glob, error) {
 
 // IsIgnored checks if a path matches any of the ignore patterns.
 func IsIgnored(path string, patterns []glob.Glob) bool {
-	path = filepath.ToSlash(path)
+	path = normalizePath(path)
 	for _, p := range patterns {
 		if p.Match(path) {
 			return true
