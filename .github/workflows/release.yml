@@ -1,6 +1,5 @@
 name: Build and Release
 
-# Start in Release 
 on:
   release:
     types: [created]
@@ -9,9 +8,28 @@ jobs:
   build:
     name: Compile and Upload
     runs-on: ubuntu-latest
-        
     permissions:
       contents: write
+    
+    strategy:
+      matrix:
+        include:
+          # Linux
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          
+          # Windows
+          - goos: windows
+            goarch: amd64
+            extension: .exe
+          
+          # macOS (Darwin)
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
 
     steps:
       - name: Checkout
@@ -20,29 +38,20 @@ jobs:
       - name: Config Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.1' 
+          go-version: '1.25.1'
 
-      # --- Linux ---
-      - name: Build Linux (amd64)
+      - name: Build
         env:
-          GOOS: linux
-          GOARCH: amd64
-          CGO_ENABLED: 0 # static
-        run: go build -ldflags="-s -w" -o syncs-linux-amd64 .
-
-      # --- Windows ---
-      - name: Build Windows (amd64)
-        env:
-          GOOS: windows
-          GOARCH: amd64
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
-        run: go build -ldflags="-s -w" -o syncs-windows-amd64.exe .
+        run: |
+          BINARY_NAME=syncs-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.extension }}
+          go build -ldflags="-s -w" -o $BINARY_NAME . 
+          sha256sum $BINARY_NAME > $BINARY_NAME.sha256
 
-      # --- Upload Files ---
       - name: Upload Release Assets
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
-        with:
-          files: |
-            syncs-linux-amd64
-            syncs-windows-amd64.exe
+        with:   
+          files: syncs-*
