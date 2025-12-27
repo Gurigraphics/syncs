@@ -63,10 +63,11 @@ func (c *Core) handleLocalChange(event types.FileEvent) {
 	if event.Op&fsnotify.Remove == fsnotify.Remove || event.Op&fsnotify.Rename == fsnotify.Rename {
 		if c.manifest.HasEntry(event.Path) {
 			c.manifest.DeleteEntry(event.Path)
-			log.Printf("[CORE] Local deletion of '%s'. Sending notification.", event.Path)
+			pathNorm := filepath.ToSlash(event.Path)
+			log.Printf("[CORE] Local deletion of '%s'. Sending notification.", pathNorm)
 			c.outgoingMessages <- types.WSMessage{
 				Type:    "delete_notification",
-				Payload: map[string]string{"path": event.Path},
+				Payload: map[string]string{"path": pathNorm},
 			}
 			c.manifest.Save()
 		}
@@ -78,11 +79,12 @@ func (c *Core) handleLocalChange(event types.FileEvent) {
 		return
 	}
 
-	log.Printf("[CORE] Local change to '%s'. Sending update notification.", event.Path)
+	pathNorm := filepath.ToSlash(event.Path)
+	log.Printf("[CORE] Local change to '%s'. Sending update notification.", pathNorm)
 	c.outgoingMessages <- types.WSMessage{
 		Type: "update_notification",
 		Payload: map[string]interface{}{
-			"path":     event.Path,
+			"path":     pathNorm,
 			"hash":     hash,
 			"metadata": newMeta,
 		},
@@ -130,7 +132,7 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 
 			localHash, _, exists := c.manifest.GetEntry(path)
 			if !exists || localHash != remoteHash {
-				requestList = append(requestList, path)
+				requestList = append(requestList, filepath.ToSlash(path))
 			}
 		}
 		if len(requestList) > 0 {
@@ -142,13 +144,14 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 		// Note: Depending on implementation, iterating manifest.Data.Paths directly might require locking.
 		// Assuming single-threaded Core execution or internal locking:
 		for localPath, localHash := range c.manifest.Data.Paths {
-			if _, ok := remoteManifest.Paths[localPath]; !ok {
-				log.Printf("[CORE] Pushing local file missing on remote: %s", localPath)
-				_, meta, _ := c.manifest.GetEntry(localPath)
+			localPathNorm := filepath.ToSlash(localPath)
+			if _, ok := remoteManifest.Paths[localPathNorm]; !ok {
+				log.Printf("[CORE] Pushing local file missing on remote: %s", localPathNorm)
+				_, meta, _ := c.manifest.GetEntry(localPathNorm)
 				c.outgoingMessages <- types.WSMessage{
 					Type: "update_notification",
 					Payload: map[string]interface{}{
-						"path": localPath, "hash": localHash, "metadata": meta,
+						"path": localPathNorm, "hash": localHash, "metadata": meta,
 					},
 				}
 			}
