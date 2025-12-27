@@ -295,15 +295,18 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 		var chunk types.FileChunk
 		remap(msg.Payload, &chunk)
 
+		log.Printf("[DEBUG] file_chunk recebido: path original='%s'", chunk.Path)
 		if msg.Compressed {
 			chunk.Content = fileops.DecompressData(chunk.Content)
 		}
 
 		// Normalize path to forward slashes (cross-platform compatibility)
 		chunk.Path = filepath.ToSlash(chunk.Path)
+		log.Printf("[DEBUG] file_chunk normalizado: path='%s'", chunk.Path)
 
 		finalPath := filepath.Join(c.manifest.SharedDir, chunk.Path)
 		tempPath := finalPath + ".part"
+		log.Printf("[DEBUG] file_chunk finalPath='%s' tempPath='%s'", finalPath, tempPath)
 
 		// 1. Write/Append Chunk
 		isFirst := chunk.ChunkIndex == 0
@@ -320,7 +323,7 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 
 		// 2. Finalize if Last Chunk
 		if chunk.ChunkIndex == chunk.TotalChunks-1 {
-			log.Printf("[CORE] Finalizing transfer of '%s'", chunk.Path)
+			log.Printf("[CORE] Finalizing transfer de '%s'", chunk.Path)
 
 			recentlyWritten.Store(chunk.Path, true)
 			time.AfterFunc(2*time.Second, func() { recentlyWritten.Delete(chunk.Path) })
