@@ -162,6 +162,9 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 		}
 		remap(msg.Payload, &data)
 
+		// Normalize path to forward slashes (cross-platform compatibility)
+		data.Path = filepath.ToSlash(data.Path)
+
 		// Ignore notifications for files without an extension
 		if c.cfg.SyncBehavior.IgnoreFilesWithoutExtension {
 			if !strings.Contains(filepath.Base(data.Path), ".") {
@@ -201,6 +204,10 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 			Path string `json:"path"`
 		}
 		remap(msg.Payload, &data)
+
+		// Normalize path to forward slashes (cross-platform compatibility)
+		data.Path = filepath.ToSlash(data.Path)
+
 		if c.manifest.HasEntry(data.Path) {
 			log.Printf("[CORE] Deleting '%s'", data.Path)
 			fullPath := filepath.Join(c.manifest.SharedDir, data.Path)
@@ -217,6 +224,9 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 		remap(msg.Payload, &requestList)
 
 		for _, path := range requestList {
+			// Normalize path to forward slashes (cross-platform compatibility)
+			path = filepath.ToSlash(path)
+
 			fullPath := filepath.Join(c.manifest.SharedDir, path)
 			info, err := os.Stat(fullPath)
 			if err != nil {
@@ -285,6 +295,9 @@ func (c *Core) handleRemoteMessage(msg types.WSMessage) {
 		if msg.Compressed {
 			chunk.Content = fileops.DecompressData(chunk.Content)
 		}
+
+		// Normalize path to forward slashes (cross-platform compatibility)
+		chunk.Path = filepath.ToSlash(chunk.Path)
 
 		finalPath := filepath.Join(c.manifest.SharedDir, chunk.Path)
 		tempPath := finalPath + ".part"
