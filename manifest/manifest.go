@@ -169,6 +169,9 @@ func (m *Manifest) ScanAndBuild() error {
 
 // UpdateEntry updates the manifest entry for a given relative path.
 func (m *Manifest) UpdateEntry(relPath string) (*types.FileMetadata, string, bool) {
+	// Normalize path to forward slashes (cross-platform compatibility)
+	relPath = filepath.ToSlash(relPath)
+
 	fullPath := filepath.Join(m.SharedDir, relPath)
 	info, err := os.Stat(fullPath)
 	if err != nil {
@@ -210,6 +213,9 @@ func (m *Manifest) UpdateEntry(relPath string) (*types.FileMetadata, string, boo
 }
 
 func (m *Manifest) GetEntry(relPath string) (string, types.FileMetadata, bool) {
+	// Normalize path to forward slashes (cross-platform compatibility)
+	relPath = filepath.ToSlash(relPath)
+
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 	hash, ok := m.Data.Paths[relPath]
@@ -221,6 +227,9 @@ func (m *Manifest) GetEntry(relPath string) (string, types.FileMetadata, bool) {
 }
 
 func (m *Manifest) HasEntry(relPath string) bool {
+	// Normalize path to forward slashes (cross-platform compatibility)
+	relPath = filepath.ToSlash(relPath)
+
 	m.mutex.RLock()
 	defer m.mutex.RUnlock()
 	_, ok := m.Data.Paths[relPath]
@@ -228,6 +237,9 @@ func (m *Manifest) HasEntry(relPath string) bool {
 }
 
 func (m *Manifest) DeleteEntry(relPath string) *types.FileMetadata {
+	// Normalize path to forward slashes (cross-platform compatibility)
+	relPath = filepath.ToSlash(relPath)
+
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 	if oldHash, ok := m.Data.Paths[relPath]; ok {
